@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Iot</string>
+    <string name="connect">Connect</string>
+    <string name="close">Close</string>
+    <string name="receive">Receive</string>
+    <string name="send">Send</string>
+    <string name="test">Test</string>
+</resources>
