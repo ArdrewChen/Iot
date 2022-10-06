@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 import java.io.IOException
+import java.io.InputStreamReader
 import java.net.ConnectException
 import java.net.NoRouteToHostException
 import java.net.Socket
@@ -25,6 +26,9 @@ class MainActivity : AppCompatActivity() {
     //连接次数设定
     private var i = 0
 
+    //接收数据变量
+    var data: String? = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -38,27 +42,8 @@ class MainActivity : AppCompatActivity() {
         val button3: Button? = findViewById(R.id.button3)
         val button4: Button? = findViewById(R.id.button4)
         val button5: Button? = findViewById(R.id.button5)
-        val text: TextView? = findViewById(R.id.textView)
-        if (isConnect) {
-            thread {
-                try {
-//                    var a: InputStream? = null
-//                    var isr: InputStreamReader? = null
-//                    var br: BufferedReader? = null
-//                    a = socket?.getInputStream()
-//                    isr = InputStreamReader(a)
-//                    br = BufferedReader(isr)
-//                    val data = br.readText()         //将文件内容转化为字符串，只适合小文件的读取，不适合大文件的读取
-                    val data = "connected"
-                    text?.text = data
-
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
 
 
-            }
-        }
 
 
         button3?.setOnClickListener {
@@ -66,6 +51,7 @@ class MainActivity : AppCompatActivity() {
             if (!isConnect) {
                 thread {
                     initConnect(ip, port)
+
                 }
                 Thread.sleep(300)
             } else {
@@ -89,6 +75,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //创建连接
     private fun initConnect(ip: String, port: String) {
         val port1 = port.toInt()
         if (i > 5) {
@@ -106,6 +93,16 @@ class MainActivity : AppCompatActivity() {
                 initConnect(ip, port)
                 i += 1
             }
+            //循环监听是否有消息需要接收
+            while (isConnect) {
+                val text: TextView? = findViewById(R.id.textView)
+                data = receiveMessage()
+                if (data != null) { //判断服务器是否有数据发送
+                    text?.text = this.data
+                }
+//                text?.text = info
+            }
+
         } catch (e: Exception) {
             when (e) {
                 is SocketTimeoutException -> {
@@ -128,6 +125,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //创建json数据
     private fun creatJson(): String {
 
         //燃气表参数
@@ -151,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     //向服务端发送信息
-    fun sendMessage(message: String?) {
+    private fun sendMessage(message: String?) {
 
         val dout = socket?.getOutputStream()     //获取输出流
         try {
@@ -166,5 +164,27 @@ class MainActivity : AppCompatActivity() {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+    }
+
+    //接收服务器消息
+    private fun receiveMessage(): String? {
+        val din = InputStreamReader(socket?.getInputStream(), "gb2312")//获取输入流
+        var info: String? = data
+        try {
+            info = if (isConnect) {
+                val inMessage = CharArray(1024)     //设置接受缓冲，避免接受数据过长占用过多内存
+                val a = din.read(inMessage) //a存储返回消息的长度
+                if (a <= -1) {
+                    return null
+                }
+                String(inMessage, 0, a)
+            } else {
+                "检查连接情况"
+            }
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return info
     }
 }
