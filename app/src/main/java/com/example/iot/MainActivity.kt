@@ -1,5 +1,7 @@
 package com.example.iot
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -7,12 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
-import java.net.ConnectException
-import java.net.NoRouteToHostException
-import java.net.Socket
-import java.net.SocketTimeoutException
+import java.net.*
 import kotlin.concurrent.thread
 
 
@@ -36,15 +37,21 @@ class MainActivity : AppCompatActivity() {
 
         //连接服务器IP与端口
         val port = "2333"
-        val ip = "192.168.3.126"
+        val ip = "192.168.3.40"
 
         //设置UI变量
+        val button2: Button? = findViewById(R.id.button2)
         val button3: Button? = findViewById(R.id.button3)
         val button4: Button? = findViewById(R.id.button4)
         val button5: Button? = findViewById(R.id.button5)
 
 
 
+        button2?.setOnClickListener {
+            thread {
+                sendImage()
+            }
+        }
 
         button3?.setOnClickListener {
 
@@ -186,5 +193,31 @@ class MainActivity : AppCompatActivity() {
             e.printStackTrace()
         }
         return info
+    }
+
+    fun sendImage() {
+        try {
+
+            val outputStream = DataOutputStream(socket?.getOutputStream())
+            //发送的图片为demo.jpg，将bitmap转为字节数组
+            val bitmap = BitmapFactory.decodeResource(this.application.resources, R.drawable.demo)
+            val bout = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bout)
+            //写入字节的长度，再写入图片的字节
+            val len = bout.size().toLong()
+            //这里打印一下发送的长度
+            Log.i("sendImgMsg", "len: $len")
+            outputStream.writeLong(len)
+            outputStream.write(bout.toByteArray())
+            //发送成功
+            Log.i("ServerReceviedByTcp", "outputStream.write ok")
+
+            // 发送读取的数据到服务端
+            outputStream.flush()
+        } catch (e: UnknownHostException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
     }
 }
