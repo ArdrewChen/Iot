@@ -2,8 +2,8 @@
     <string name="app_name">Iot</string>
     <string name="connect">Connect</string>
     <string name="close">Close</string>
-    <string name="receive">Receive</string>
-    <string name="send">Send</string>
+    <string name="sendtext">Sendtext</string>
+    <string name="sendImg">SendImage</string>
     <string name="test">Test</string>
     <string name="image">Image</string>
 </resources>

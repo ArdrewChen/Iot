@@ -1,9 +1,11 @@
 package com.example.iot
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -37,21 +39,28 @@ class MainActivity : AppCompatActivity() {
 
         //连接服务器IP与端口
         val port = "2333"
-        val ip = "192.168.3.40"
+        val ip = "192.168.3.126"
 
         //设置UI变量
-        val button2: Button? = findViewById(R.id.button2)
+//        val button2: Button? = findViewById(R.id.button2)
         val button3: Button? = findViewById(R.id.button3)
         val button4: Button? = findViewById(R.id.button4)
         val button5: Button? = findViewById(R.id.button5)
+        val button: Button? = findViewById(R.id.button)
 
 
 
-        button2?.setOnClickListener {
-            thread {
-                sendImage()
+        button?.setOnClickListener {
+            val out = creatJson()
+            if (isConnect) {
+                thread {
+                    sendMessage(out)
+                }
+            } else {
+                Toast.makeText(this, "通信已断开", Toast.LENGTH_SHORT).show()
             }
         }
+
 
         button3?.setOnClickListener {
 
@@ -74,7 +83,10 @@ class MainActivity : AppCompatActivity() {
             val out = creatJson()
             if (isConnect) {
                 thread {
-                    sendMessage(out)
+//                    sendMessage(out)
+                    val spfRecord = getSharedPreferences("spfRecord", MODE_PRIVATE)
+                    val image64 = spfRecord.getString("image_64", "")
+                    sendMessage(image64)
                 }
             } else {
                 Toast.makeText(this, "通信已断开", Toast.LENGTH_SHORT).show()
@@ -219,5 +231,10 @@ class MainActivity : AppCompatActivity() {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+    }
+
+    fun image(view: View) {
+        val intent = Intent(this@MainActivity, takeactivity::class.java)
+        startActivity(intent)
     }
 }

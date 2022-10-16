@@ -34,6 +34,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="20dp"
             android:text="@string/image"
+            android:onClick="image"
             android:visibility="visible" />
 
         <Button
@@ -59,7 +60,7 @@
             android:layout_height="50dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="20dp"
-            android:text="@string/send" />
+            android:text="@string/sendImg" />
 
         <Button
             android:id="@+id/button"
@@ -67,7 +68,7 @@
             android:layout_height="50dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="20dp"
-            android:text="@string/receive" />
+            android:text="@string/sendtext" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
