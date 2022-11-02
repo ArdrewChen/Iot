@@ -26,6 +26,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.534">
+        <Button
+            android:id="@+id/buttonx"
+            android:layout_width="150dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="20dp"
+            android:text="@string/bluetooth"
+            android:onClick="bluetooth"
+            android:visibility="visible" />
 
         <Button
             android:id="@+id/button2"

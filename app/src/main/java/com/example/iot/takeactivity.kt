@@ -3,11 +3,14 @@ package com.example.iot
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
@@ -104,9 +107,14 @@ class takeactivity : AppCompatActivity() {
                 try {
                     //获取拍摄的图片
                     val inputStream = contentResolver.openInputStream(imageUri!!)
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    var bitmap = BitmapFactory.decodeStream(inputStream)
                     ivAvatar!!.setImageBitmap(bitmap)
                     //保存图片
+                    bitmap = compressBitmap(
+                        bitmap,
+                        (bitmap.width / 4).toDouble(),
+                        (bitmap.width / 4).toDouble()
+                    )
                     val imageTobase64 = ImageUtil.imageToBase64(bitmap)
                     imageBase64 = imageTobase64
                 } catch (e: FileNotFoundException) {
@@ -128,5 +136,42 @@ class takeactivity : AppCompatActivity() {
     companion object {
         const val REQUEST_CODE_TAKE = 1
         const val REQUEST_CODE_CHOOSE = 0
+    }
+
+    /**图片压缩: 规定尺寸等比例压缩，宽高不能超过限制要求 @param beforBitmap 要压缩的图片 @param maxWidth 最大宽度限制 @param maxHeight 最大高度限 @return 压缩后的图片 */
+    fun compressBitmap(beforBitmap: Bitmap, maxWidth: Double, maxHeight: Double): Bitmap? {
+        // 图片原有的宽度和高度
+        val beforeWidth = beforBitmap.width.toFloat()
+        val beforeHeight = beforBitmap.height.toFloat()
+        if (beforeWidth <= maxWidth && beforeHeight <= maxHeight) {
+            return beforBitmap
+        }
+
+        // 计算宽高缩放率，等比例缩放
+        val scaleWidth = maxWidth.toFloat() / beforeWidth
+        val scaleHeight = maxHeight.toFloat() / beforeHeight
+        var scale = scaleWidth
+        if (scaleWidth > scaleHeight) {
+            scale = scaleHeight
+        }
+        Log.d(
+            "BitmapUtils", "before[" + beforeWidth + ", " + beforeHeight + "] max[" + maxWidth
+                    + ", " + maxHeight + "] scale:" + scale
+        )
+
+        // 矩阵对象
+        val matrix = Matrix()
+        // 缩放图片动作 缩放比例
+        matrix.postScale(scale, scale)
+        // 创建一个新的Bitmap 从原始图像剪切图像
+        return Bitmap.createBitmap(
+            beforBitmap,
+            0,
+            0,
+            beforeWidth.toInt(),
+            beforeHeight.toInt(),
+            matrix,
+            true
+        )
     }
 }

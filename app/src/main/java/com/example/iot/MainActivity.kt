@@ -2,7 +2,7 @@ package com.example.iot
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -10,11 +10,9 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.iot.bluetooth.BluetoothActivity
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
-import java.io.IOException
-import java.io.InputStreamReader
+import java.io.*
 import java.net.*
 import kotlin.concurrent.thread
 
@@ -32,15 +30,19 @@ class MainActivity : AppCompatActivity() {
     //接收数据变量
     var data: String? = ""
 
+    //创建json数据
+    var json = JSONObject()
+    var jsout = JSONObject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
 
         //连接服务器IP与端口
-        val port = "2333"
+        val port = "8888"
         val ip = "192.168.3.126"
-
+//        val ip = "192.168.31.62"
         //设置UI变量
 //        val button2: Button? = findViewById(R.id.button2)
         val button3: Button? = findViewById(R.id.button3)
@@ -48,6 +50,22 @@ class MainActivity : AppCompatActivity() {
         val button5: Button? = findViewById(R.id.button5)
         val button: Button? = findViewById(R.id.button)
 
+
+        if (!isConnect) {
+            thread {
+                initConnect(ip, port)
+//                val statue = "download"
+//                jsout.put("type", "connecting")
+//                jsout.put("equipmentId", 836039386)
+//                jsout.put("job", statue)
+//                val answer = jsout.toString() + "\n"
+//                sendMessage(answer)  //可能导致解码失败
+
+            }
+            Thread.sleep(300)
+        } else {
+            Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show()
+        }
 
 
         button?.setOnClickListener {
@@ -67,7 +85,12 @@ class MainActivity : AppCompatActivity() {
             if (!isConnect) {
                 thread {
                     initConnect(ip, port)
-
+//                    val statue = "upload"
+//                    jsout.put("type", "connecting")
+//                    jsout.put("equipmentId", 836039386)
+//                    jsout.put("job", statue)
+//                    val answer = jsout.toString() + "\n"
+//                    sendMessage(answer)  //可能导致解码失败
                 }
                 Thread.sleep(300)
             } else {
@@ -78,15 +101,15 @@ class MainActivity : AppCompatActivity() {
         button4?.setOnClickListener {
             socket?.close()
             isConnect = false
+            Toast.makeText(this, "连接已断开", Toast.LENGTH_SHORT).show()
         }
+
         button5?.setOnClickListener {
-            val out = creatJson()
             if (isConnect) {
                 thread {
-//                    sendMessage(out)
                     val spfRecord = getSharedPreferences("spfRecord", MODE_PRIVATE)
                     val image64 = spfRecord.getString("image_64", "")
-                    sendMessage(image64)
+                    sendImage(image64)
                 }
             } else {
                 Toast.makeText(this, "通信已断开", Toast.LENGTH_SHORT).show()
@@ -116,10 +139,15 @@ class MainActivity : AppCompatActivity() {
             while (isConnect) {
                 val text: TextView? = findViewById(R.id.textView)
                 data = receiveMessage()
+                print(data)
                 if (data != null) { //判断服务器是否有数据发送
                     text?.text = this.data
+                    if (data == "101\n" || data == "102\n" || data == "100\n" || data == "105\n" || data == "106\n") {
+                        data=data
+                    } else {
+                        json = data?.let { JSONObject(it) }!!
+                    }
                 }
-//                text?.text = info
             }
 
         } catch (e: Exception) {
@@ -148,22 +176,43 @@ class MainActivity : AppCompatActivity() {
     private fun creatJson(): String {
 
         //燃气表参数
-        val id = "1"
-        val time = "202209202301"
-        val voc = "3.0"
-        val vol = "233"
-        val key = "open"
+        val equipmentId = 836039386
+        val diagnosisId = "0001"
+        val diagnosisTime = "2022-10-10 19:59:53"
+        val diagnosisPerson = false
+//        val value = 3.00
+        val picture = 1
+        //仪器数据
+        val spfRecord = getSharedPreferences("spfRecord", MODE_PRIVATE)
+        val id_acp = spfRecord.getString("name", "")
+        val time_acp = spfRecord.getString("time", "")
+        val voc_acp = spfRecord.getString("dianya", "")
+        val value = spfRecord.getString("yql", "")
+//        val key_acp = spfRecord.getBoolean("kg","")
+        println(value)
 
-        //json对象
-        val jsout = JSONObject()
-
-        jsout.put("id", id)
-        jsout.put("time", time)
-        jsout.put("voc", voc)
-        jsout.put("vol", vol)
-        jsout.put("key", key)
-
-        return jsout.toString()
+        if (json.has("equipmentId")) {
+            json.put("equipmentId", equipmentId)
+        }
+        if (json.has("diagnosisId")) {
+            json.put("diagnosisId", diagnosisId)
+        }
+        if (json.has("diagnosisTime")) {
+            json.put("diagnosisTime", diagnosisTime)
+        }
+//        if (json.has("diagnosisPerson")) {
+//            json.put("diagnosisPerson", diagnosisPerson)
+//        }
+        if (json.has("value")) {
+            json.put("value", value)
+        }
+        if (json.has("dianya")) {
+            json.put("dianya", voc_acp)
+        }
+        if (json.has("picture")) {
+            json.put("picture", picture)
+        }
+        return json.toString() + "\n"
 
     }
 
@@ -179,6 +228,7 @@ class MainActivity : AppCompatActivity() {
     """.toByteArray(charset("utf-8"))           // 写入需要发送的数据到输出流对象中
                 ) // 数据的结尾加上换行符才可让服务器端的readline()停止阻塞
                 dout.flush() // 发送数据到服务端
+                println("发送成功")
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -200,35 +250,20 @@ class MainActivity : AppCompatActivity() {
             } else {
                 "检查连接情况"
             }
-
         } catch (e: IOException) {
             e.printStackTrace()
         }
         return info
     }
 
-    fun sendImage() {
+    fun sendImage(img: String?) {
         try {
-
-            val outputStream = DataOutputStream(socket?.getOutputStream())
-            //发送的图片为demo.jpg，将bitmap转为字节数组
-            val bitmap = BitmapFactory.decodeResource(this.application.resources, R.drawable.demo)
-            val bout = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bout)
-            //写入字节的长度，再写入图片的字节
-            val len = bout.size().toLong()
-            //这里打印一下发送的长度
-            Log.i("sendImgMsg", "len: $len")
-            outputStream.writeLong(len)
-            outputStream.write(bout.toByteArray())
-            //发送成功
-            Log.i("ServerReceviedByTcp", "outputStream.write ok")
-
-            // 发送读取的数据到服务端
-            outputStream.flush()
-        } catch (e: UnknownHostException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
+            val os = socket?.getOutputStream()
+            val pw = os?.let { PrintWriter(it) }
+            img?.let { pw?.write(it) }
+            pw?.flush()
+            socket?.shutdownOutput()
+        }catch (e: IOException) {
             e.printStackTrace()
         }
     }
@@ -237,4 +272,10 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this@MainActivity, takeactivity::class.java)
         startActivity(intent)
     }
+
+    fun bluetooth(view: View) {
+        val intent = Intent(this@MainActivity, BluetoothActivity::class.java)
+        startActivity(intent)
+    }
+
 }

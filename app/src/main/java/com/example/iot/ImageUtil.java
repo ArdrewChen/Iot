@@ -2,7 +2,9 @@ package com.example.iot;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.util.Base64;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 
@@ -23,5 +25,4 @@ public class ImageUtil {
         bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         return bitmap;
     }
-
 }

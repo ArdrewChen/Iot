@@ -4,6 +4,7 @@
     <string name="close">Close</string>
     <string name="sendtext">Sendtext</string>
     <string name="sendImg">SendImage</string>
-    <string name="test">Test</string>
+    <string name="test">智能燃气表采集系统</string>
     <string name="image">Image</string>
+    <string name="bluetooth">Bluetooth</string>
 </resources>
